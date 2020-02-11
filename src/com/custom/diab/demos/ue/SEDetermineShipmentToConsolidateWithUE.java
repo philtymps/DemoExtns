@@ -7,6 +7,7 @@ import java.util.Iterator;
 import com.custom.yantra.util.YFSUtil;
 import com.yantra.interop.japi.YIFApi;
 import com.yantra.interop.japi.YIFClientFactory;
+import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.*;
 import com.yantra.yfc.log.YFCLogCategory;
 import com.yantra.yfc.util.YFCCommon;
@@ -115,12 +116,22 @@ public class SEDetermineShipmentToConsolidateWithUE implements YDMDetermineShipm
 		while (iShipments.hasNext())
 		{
 			YFCElement	eleShipment = (YFCElement)iShipments.next();
+			String		sTestShipToCustomerId = eleShipment.getAttribute("ShipToCustomerId");
+			String		sTestBillToCustomerId = eleShipment.getAttribute("BillToCustomerId");
 			
 			// for sales orders (outbound) make sure customer is the same before consolidating
-			if (sDocumentType.equals("0001") &&
-				(!eleShipment.getAttribute("ShipToCustomerId").equals (sShipToCustomerId) ||
-				 !eleShipment.getAttribute("BillToCustomerId").equals (sBillToCustomerId)))
-				 	continue;
+			if (sDocumentType.equals("0001"))
+			{
+				// test only valid customer id's - anonymous orders will have no shipto/billto id's.
+				if (!YFCObject.isVoid(sTestBillToCustomerId) && !YFCObject.isVoid(sTestShipToCustomerId)
+				&&  !YFCObject.isVoid(sBillToCustomerId) && !YFCObject.isVoid(sShipToCustomerId))
+				{
+					if (!sShipToCustomerId.equals (sTestShipToCustomerId) || !sBillToCustomerId.equals (sTestBillToCustomerId))
+						continue;
+				}
+				else
+					continue;
+			}
 			
 			//  Only Shipments in Created or Ready for Backroom Pick status can be consolidated 
 			if (eleShipment.getAttribute("Status").equals("1100") || eleShipment.getAttribute("Status").equals("1100.70.06.10"))
