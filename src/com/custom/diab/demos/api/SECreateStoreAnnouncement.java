@@ -102,6 +102,8 @@ public class SECreateStoreAnnouncement implements YIFCustomApi {
 			// Compute new ExpectedShipDate to represent the PickByDateTime
 			if (eleShipment.getAttribute("DeliveryMethod").equals("SHP"))
 			{
+				String freightTerms = "PREPAID";
+				eleShipment.setAttribute("FreightTerms", freightTerms);
 				if (sDocType.equals ("0006"))
 				{
 					// this hack forces Transfer Shipments to be expected to ship by 5:00 PM less the configured SLA (e.g. -60 Min)
