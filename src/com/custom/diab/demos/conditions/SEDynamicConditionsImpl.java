@@ -62,6 +62,13 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 			}
 
 			// test condition names
+			if (name.startsWith ("Is SIM Enabled"))
+			{
+				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
+				YFCDocument	docGetProperty = YFCDocument.getDocumentFor("<Property Category=\"yfs\" PropertyName=\"yfs.sim.enabled\"/>");
+				docGetProperty = YFCDocument.getDocumentFor(api.getProperty(env,  docGetProperty.getDocument()));
+				return docGetProperty.getDocumentElement().getBooleanAttribute("PropertyValue");
+			}
 			if (name.startsWith ("Is Monitor Event Organization Child Of"))
 			{
 				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
