@@ -67,7 +67,8 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 				YFCDocument	docGetProperty = YFCDocument.getDocumentFor("<Property Category=\"yfs\" PropertyName=\"yfs.sim.enabled\"/>");
 				docGetProperty = YFCDocument.getDocumentFor(api.getProperty(env,  docGetProperty.getDocument()));
-				return docGetProperty.getDocumentElement().getBooleanAttribute("PropertyValue");
+				String sPropertyValue = docGetProperty.getDocumentElement().getAttribute("PropertyValue");
+				return (docGetProperty.getDocumentElement().getBooleanAttribute("PropertyValue") || sPropertyValue.equalsIgnoreCase("Y")); 
 			}
 			if (name.startsWith ("Is Monitor Event Organization Child Of"))
 			{
