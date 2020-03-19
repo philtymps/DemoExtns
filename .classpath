@@ -22,7 +22,7 @@
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/commons-net-1.4.1.jar"/>
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/commons-pool-1.4.jar"/>
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/concurrent.jar"/>
-	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/db2jcc.jar"/>
+	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/db2jcc4.jar"/>
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/entities.jar"/>
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/icu4j-53_1.jar"/>
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/icu4j-charset-53_1.jar"/>

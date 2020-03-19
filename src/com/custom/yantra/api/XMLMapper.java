@@ -18,8 +18,11 @@ import com.yantra.interop.japi.YIFCustomApi;
 import com.yantra.yfs.japi.YFSEnvironment;
 import com.yantra.yfc.dblayer.YFCDBContext;
 import com.yantra.yfc.dom.*;
+import com.yantra.yfc.util.YFCCommon;
 import com.yantra.yfc.util.YFCConfigurator;
 import com.yantra.interop.util.PLTResourceLoader;
+import com.yantra.util.YFCXSLTransformer;
+import com.yantra.util.YFCXSLTransformerImpl;
 
 import javax.xml.transform.*;
 import javax.xml.transform.stream.*;
@@ -72,7 +75,7 @@ public class XMLMapper implements YIFCustomApi
 	public Document WriteHTML (YFSEnvironment env, Document docIn) throws Exception
 	{
 		String sHtmlFileName = evaluateFileName (docIn);
-		String sTemplateName = "";
+		String sTemplateName = evaluateTemplateName(docIn);
 		
 		if (YFSUtil.getDebug())
 		{
@@ -80,37 +83,41 @@ public class XMLMapper implements YIFCustomApi
 			System.out.println (YFCDocument.getDocumentFor(docIn).getString());
 		}
 
-		// get the actual file name of XSL template using platform resource loader
-		try {
-		PLTResourceLoader	loader = new PLTResourceLoader (evaluateTemplateName(docIn));
-		loader.setUseTemplateLookup(YFCConfigurator.getInstance().getBooleanProperty("xslcomponent.usetemplateLoading", false));
-		URL url = loader.getResource((YFCDBContext)env, (Map)new HashMap());
-		sTemplateName = url.toExternalForm();
-		} catch (NullPointerException eIgnore){
-			sTemplateName = "jar:file:/opt/Sterling/runtime/jar/platform/9_5/resources.jar!"+evaluateTemplateName(docIn);
-		}
-		if (YFSUtil.getDebug())
+		if(!YFCCommon.isVoid(evaluateTemplateName(docIn)))
 		{
-			System.out.println ("XSL Template Name="+sTemplateName);
-			System.out.println ("Ouput File Name="+sHtmlFileName);
-		}
-		// perform XSLT transformation (XML to HTML) and save to HTML file
-		try {
-			YFCDocument			docXML = YFCDocument.getDocumentFor (docIn);
-			TransformerFactory factory = TransformerFactory.newInstance();
-			StreamSource		xslStream = new StreamSource (sTemplateName);
-			Transformer			transformer = factory.newTransformer(xslStream);
-			StreamSource		source = new StreamSource (new CharArrayReader(docXML.getString().toCharArray()));
-			StreamResult		result = new StreamResult (sHtmlFileName);
+			if (YFSUtil.getDebug())
+			{
+				System.out.println ("XSL Template Name="+sTemplateName);
+				System.out.println ("Ouput File Name="+sHtmlFileName);
+			}
 
-			// write the output file 
-			transformer.transform(source, result);
-			
-		} catch (TransformerConfigurationException e) {
-			throw new Exception (e.getMessage());
-		} catch (TransformerException e){
-			throw new Exception (e.getMessage());
+            try {
+    			YFCXSLTransformer trans = YFCXSLTransformerImpl.getInstance();
+            	InputStream xslStream = getClass().getResourceAsStream(sTemplateName);
+                StringBuffer sb = new StringBuffer(YFCDocument.getDocumentFor(docIn).getString());
+                String sTransformed = trans.transformXML(sTemplateName, xslStream, sb);
+                        
+            	FileOutputStream htmlStream = new FileOutputStream (sHtmlFileName);
+                htmlStream.write(sTransformed.getBytes());
+                htmlStream.close();
+            } catch (FileNotFoundException e) {
+            	if (YFSUtil.getDebug())
+            		// TODO Auto-generated catch block
+            		e.printStackTrace();
+            }
+/* This Logic can be used to read external xsl templates not in resource.jar
+            YFCXSLTransformer trans = YFCXSLTransformerImpl.getInstance();
+            try {
+                InputStream xslStream = new FileInputStream((String)getProperty("XSLFile"));
+                StringBuffer sb = new StringBuffer(YFCDocument.getDocumentFor(docIn).toString());
+                return trans.transformXML(null, xslStream, sb);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+ */
 		}
+
 		return docIn;
 	}
 
