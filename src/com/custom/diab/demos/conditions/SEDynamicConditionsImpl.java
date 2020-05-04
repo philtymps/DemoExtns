@@ -62,6 +62,21 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 			}
 
 			// test condition names
+			if (name.startsWith ("Is Insurance Invalid") || name.startsWith("Is Insurance Valid"))
+			{
+				bRet = name.toUpperCase().contains("INVALID");
+				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
+				YFCDocument	docOrder = YFCDocument.getDocumentFor (xmlData);
+				YFCDocument	docOrderOutputTemplate = YFCDocument.getDocumentFor ("<Order BuyerOrganizationCode=\"\" OrderHeaderKey=\"\" SourceIPAddress=\"\"/>");
+				env.setApiTemplate ("getOrderDetails", docOrderOutputTemplate.getDocument());
+				docOrder = YFCDocument.getDocumentFor (api.getOrderDetails (env, docOrder.getDocument()));
+				env.clearApiTemplate ("getOrderDetails");
+				String	sIPAddress = docOrder.getDocumentElement().getAttribute ("SourceIPAddress");
+				
+				// B2C orders (orders without buyer organization) that are not from 1.1.1.2 IP address require validation
+				if (!sIPAddress.equals("1.1.1.2"))
+					bRet ^= true;
+			}
 			if (name.startsWith ("Is SIM Enabled"))
 			{
 				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
