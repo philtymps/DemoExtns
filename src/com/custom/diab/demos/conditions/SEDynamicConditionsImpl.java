@@ -65,16 +65,19 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 			if (name.startsWith ("Is Insurance Invalid") || name.startsWith("Is Insurance Valid"))
 			{
 				bRet = name.toUpperCase().contains("INVALID");
-				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 				YFCDocument	docOrder = YFCDocument.getDocumentFor (xmlData);
+				/*
+				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 				YFCDocument	docOrderOutputTemplate = YFCDocument.getDocumentFor ("<Order BuyerOrganizationCode=\"\" OrderHeaderKey=\"\" SourceIPAddress=\"\"/>");
 				env.setApiTemplate ("getOrderDetails", docOrderOutputTemplate.getDocument());
 				docOrder = YFCDocument.getDocumentFor (api.getOrderDetails (env, docOrder.getDocument()));
 				env.clearApiTemplate ("getOrderDetails");
-				String	sIPAddress = docOrder.getDocumentElement().getAttribute ("SourceIPAddress");
+				*/
+				//String	sIPAddress = docOrder.getDocumentElement().getAttribute ("SourceIPAddress");
+				String	sOrderName = docOrder.getDocumentElement().getAttribute("OrderName");
 				
-				// B2C orders (orders without buyer organization) that are not from 1.1.1.2 IP address require validation
-				if (!sIPAddress.equals("1.1.1.2"))
+				// Look for orders with OrderName="Insurance Validation Failure..."
+				if (!sOrderName.startsWith ("Insurance Validation Failure"))
 					bRet ^= true;
 			}
 			if (name.startsWith ("Is SIM Enabled"))
