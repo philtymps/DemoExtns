@@ -89,5 +89,8 @@
 	<classpathentry kind="lib" path="/DIAB94/Runtime/jarall/slf4j-api-1.7.26.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="C:/DIAB94/Runtime/jarall/yrcui.jar"/>
+	<classpathentry kind="lib" path="C:/DIAB94/Runtime/jarall/sivbe.jar"/>
+	<classpathentry kind="lib" path="C:/DIAB94/Runtime/jarall/javax.json-1.0.4.jar"/>
+	<classpathentry kind="lib" path="C:/DIAB94/Runtime/jarall/com.ibm.sterling.afc.jsonutil.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
