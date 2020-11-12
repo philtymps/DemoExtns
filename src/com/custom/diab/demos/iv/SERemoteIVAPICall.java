@@ -15,7 +15,7 @@ public class SERemoteIVAPICall extends RemoteIVAPICall {
 		super();
 	}
 	
-	public Document invoke (YFSEnvironment env, Document docInXML)
+	public void beforeInvoke (YFSEnvironment env, Document docInXML)
 	{
 		YFCDocument docIn = YFCDocument.getDocumentFor(docInXML);
 		YFCElement	eleDocIn = docIn.getDocumentElement();
@@ -27,7 +27,7 @@ public class SERemoteIVAPICall extends RemoteIVAPICall {
 		{
 			if (YFSUtil.getDebug())
 			{
-				System.out.println ("Original Input to SERemoteIVAPICall:");
+				System.out.println ("Original Input to beforeInvoke:");
 				System.out.println (docIn.getString());
 			}
 			if (sInput.contains("considerSafetyStock"))
@@ -38,10 +38,10 @@ public class SERemoteIVAPICall extends RemoteIVAPICall {
 			eleInput.setNodeValue(sInput);
 			if (YFSUtil.getDebug())
 			{
-				System.out.println ("Transformed Input to RemoteIVAPICall:");
+				System.out.println ("Transformed Output from beforeInvoke:");
 				System.out.println (docIn.getString());
 			}		
 		}
-		return super.invoke(env,  docInXML);
+		return;
 	}
 }
