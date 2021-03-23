@@ -293,7 +293,7 @@ public class SEWebOrderExtensions implements YIFCustomApi {
 				while (iCommonCodes.hasNext())
 				{	
 					eleCommonCode = (YFCElement)iCommonCodes.next();
-					if (!eleCommonCode.getAttribute("CodeValue").equals("USEEFFECTIVEDATESOURCING"))
+					if (eleCommonCode.getAttribute("CodeValue").contains("EDS"))
 					{
 						try {
 							long	lStartDateTime = eleCommonCode.getDateTimeAttribute("CodeShortDescription").getTime();
