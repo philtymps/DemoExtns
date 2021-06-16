@@ -43,7 +43,7 @@ public class FairShareAllocationAgentImpl extends com.yantra.omp.agent.OMPItemBa
 		} 
 		catch (Exception ignore) 
 		{
-			
+			System.out.println ("Exception Occured in CompleteJob of FairShareAllocationAgentImpl");
 		}
 	}
 
