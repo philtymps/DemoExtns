@@ -42,7 +42,8 @@ public class SERemoteIVAPICall extends RemoteIVAPICall {
 				System.out.println (docIn.getString());
 			}		
 		}
-		// fix issue with WO creating ALLOCATED demand which isn't valid in IV.  Make it SCHEDULED instead
+		/*
+		 * // fix issue with WO creating ALLOCATED demand which isn't valid in IV.  Make it SCHEDULED instead
 		else if (sInput.contains("\"demandType\":\"ALLOCATED\""))
 		{
 			if (YFSUtil.getDebug())
@@ -56,8 +57,9 @@ public class SERemoteIVAPICall extends RemoteIVAPICall {
 			{
 				System.out.println ("Transformed Output from beforeInvoke:");
 				System.out.println (docIn.getString());
-			}		
+			}
 		}
+		*/
 		return;
 	}
 }
