@@ -35,7 +35,7 @@ public class CPGUpdateForecastForOrder implements YIFCustomApi {
         	System.out.println ("Entering UpdateForecastForOrder - Input:");
         	System.out.println (docOrder.getString());
         }
-        if (eleOrder.getAttribute("OrderType").equalsIgnoreCase("REPLEN"))
+        if (eleOrder.getAttribute("OrderType").equalsIgnoreCase("CONTRACT"))
         {
         	YFCDocument	docForecastOrder = YFCDocument.createDocument("Order");
         	YFCElement	eleForecastOrder = docForecastOrder.getDocumentElement();

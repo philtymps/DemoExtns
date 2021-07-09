@@ -8,6 +8,7 @@ package com.custom.diab.demos.api;
 
 import com.yantra.interop.japi.YIFClientFactory;
 import com.yantra.interop.japi.YIFCustomApi;
+import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.YFCDocument;
 import com.yantra.yfc.dom.YFCElement;
 import com.yantra.yfc.util.YFCCommon;
@@ -35,7 +36,7 @@ public class SEProcessCustomOrderHold implements YIFCustomApi
 		
 		if (YFSUtil.getDebug())
 		{
-			System.out.println ("Entering SEProcessCustomerOrderHold:\r\n");
+			System.out.println ("Entering SEProcessCustomOrderHold:\r\n");
 			System.out.println ("UE Input: \r\n" + orderDoc.getString ());
 		}
         String status;
@@ -45,6 +46,8 @@ public class SEProcessCustomOrderHold implements YIFCustomApi
 		{
             status = "1200";	// rejected
 			responseCodeDesc = "The System Rejected the Hold";
+			if (!YFCObject.isVoid(props.getProperty("CustomOrderHoldResponseReason")))
+				responseCodeDesc += " " + props.getProperty("CustomOrderHoldResponseReason");
 		}
 		else
 		{
@@ -65,7 +68,7 @@ public class SEProcessCustomOrderHold implements YIFCustomApi
         }
 		if (YFSUtil.getDebug())
 		{
-			System.out.println ("Exiting SEProcessCustomerOrderHold:\r\n");
+			System.out.println ("Exiting SEProcessCustomOrderHold:\r\n");
 			System.out.println ("UE Output: \r\n" + outDoc.getString ());
 		}
         return outDoc.getDocument();

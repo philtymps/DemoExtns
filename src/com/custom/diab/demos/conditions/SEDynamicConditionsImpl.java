@@ -80,6 +80,18 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 				if (!sOrderName.startsWith ("Insurance Validation Failure"))
 					bRet ^= true;
 			}
+			if (name.startsWith("CPG"))
+			{
+				if (name.startsWith("CPG Is Low Inventory Event"))
+				{
+					YFCDocument docAvailabilityChange = YFCDocument.getDocumentFor(xmlData);
+					YFCElement	eleAvailabilityChange = docAvailabilityChange.getDocumentElement();
+					String	sAlertLevel = (String)m_props.get("AlertLevel");
+					if (eleAvailabilityChange.getIntAttribute("AlertLevel") >= Integer.valueOf(sAlertLevel))
+						return true;
+					return false;
+				}
+			}
 			if (name.startsWith ("Is SIM Enabled"))
 			{
 				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
