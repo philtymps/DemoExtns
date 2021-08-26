@@ -8,6 +8,8 @@ import com.custom.yantra.util.YFSUtil;
 import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.YFCDocument;
 import com.yantra.yfc.dom.YFCElement;
+import com.yantra.yfc.util.YFCCommon;
+import com.yantra.yfc.util.YFCDateUtils;
 import com.yantra.yfs.japi.YFSEnvironment;
 import com.yantra.yfs.japi.YFSUserExitException;
 import com.yantra.ydm.japi.ue.YDMBeforeCreateShipment;
@@ -20,7 +22,7 @@ public class SEBeforeCreateShipmentUEImpl implements YDMBeforeCreateShipment {
 		try {
 			YFCDocument	docShipment = YFCDocument.getDocumentFor(docIn);
 			YFCElement	eleShipment = docShipment.getDocumentElement();
-			YFCElement	eleShipmentLines = eleShipment.getChildElement ("ShipmentLines");
+			//YFCElement	eleShipmentLines = eleShipment.getChildElement ("ShipmentLines");
 			
 			if (YFSUtil.getDebug())
 			{
@@ -29,9 +31,16 @@ public class SEBeforeCreateShipmentUEImpl implements YDMBeforeCreateShipment {
 			}
 			String sDocType = eleShipment.getAttribute("DocumentType");
 
-			// if not a Sales Order Shipment or Shipment lines don't exists we skip this processing
-			if (YFCObject.isVoid(sDocType) || !sDocType.equals("0001") || YFCObject.isNull(eleShipmentLines))
-				return docIn;
+			if("0006".contentEquals(eleShipment.getAttribute("DocumentType"))) {
+				eleShipment.setAttribute("SCAC", "Y_ANY");
+				eleShipment.setAttribute("CarrierServiceCode", "EXPRESS_AURE");
+				eleShipment.setAttribute("ExpectedShipmentDate", YFCDateUtils.getCurrentDate(true).getString("yyyy-MM-dd"));
+			}
+			if("SHP".contentEquals(eleShipment.getAttribute("DeliveryMethod"))  && YFCCommon.isVoid(eleShipment.getAttribute("SCAC")))
+			{
+				eleShipment.setAttribute("SCAC", "Y_ANY");
+				eleShipment.setAttribute("CarrierServiceCode", "STANDARD_AURE");
+			}
 
 			/*			PHT - Removed this Logic for V4 BDA - No Longer Required
 			Iterator	iShipmentLines = eleShipmentLines.getChildren();
