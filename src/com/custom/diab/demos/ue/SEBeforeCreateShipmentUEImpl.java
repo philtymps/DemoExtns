@@ -22,7 +22,7 @@ public class SEBeforeCreateShipmentUEImpl implements YDMBeforeCreateShipment {
 		try {
 			YFCDocument	docShipment = YFCDocument.getDocumentFor(docIn);
 			YFCElement	eleShipment = docShipment.getDocumentElement();
-			//YFCElement	eleShipmentLines = eleShipment.getChildElement ("ShipmentLines");
+			YFCElement	eleShipmentLines = eleShipment.getChildElement ("ShipmentLines");
 			
 			if (YFSUtil.getDebug())
 			{
