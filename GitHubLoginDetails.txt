@@ -3,3 +3,5 @@ Github User: philtymps
 Github Pass: MaGa8967
 
 Github Personal Access Token: 12432113a06dd1accfc79d3aebdda4d6e4c63c5b
+Revised Personal Access Token: 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
+
