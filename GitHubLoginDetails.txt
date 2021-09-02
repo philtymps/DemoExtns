@@ -2,7 +2,7 @@
 Github User: philtymps
 Github Pass: MaGa8967
 
-Old Github Personal Access Token: 12432113a06dd1accfc79d3aebdda4d6e4c63c5b
+Github Personal Access Token: 12432113a06dd1accfc79d3aebdda4d6e4c63c5b
 
 IBM GITHUB Personal Access Token: 24173050094cba1c03cb3970a24c249e6fd59d70
 
