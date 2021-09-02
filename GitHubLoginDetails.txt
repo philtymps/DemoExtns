@@ -6,5 +6,5 @@ Github Personal Access Token: 12432113a06dd1accfc79d3aebdda4d6e4c63c5b
 
 IBM GITHUB Personal Access Token: 24173050094cba1c03cb3970a24c249e6fd59d70
 
-Revised Personal Access Token: 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
+Revised Personal Access Token: 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
 
