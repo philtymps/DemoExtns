@@ -33,9 +33,11 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 		}
 		YFCElement	eleOrder = docOrder.getDocumentElement();
 		
-		// Only do this calculation for Sales Orders
+		// Only do this calculation for B2C Sales Orders
 		String sDocumentType = eleOrder.getAttribute("DocumentType");
-		if (!YFCObject.isNull(sDocumentType) && !"0001".equals(sDocumentType))
+		String sEnterpriseCode = eleOrder.getAttribute("EnterpriseCode");
+		String sCustomerID = eleOrder.getAttribute("CustomerID");
+		if (!YFCObject.isNull(sDocumentType) && !"0001".equals(sDocumentType) || (sEnterpriseCode.startsWith("AuroraCPG") && !sCustomerID.startsWith("CUST")))
 			return docIn;
 		
 		YFCElement	eleShipping = eleOrder.getChildElement("Shipping");
