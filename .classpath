@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="com/custom/diab/demos/api/SESetPOSOrderDefaults.java" kind="src" path="src"/>
-	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/axis.jar"/>
 	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/BDADemoProject.jar"/>
 	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/kafka-clients-2.3.1.jar"/>
 	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/cmgt-base64.jar"/>

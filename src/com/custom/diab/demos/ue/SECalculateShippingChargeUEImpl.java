@@ -13,11 +13,12 @@ import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.*;
 import com.yantra.yfc.util.YFCCommon;
 import com.yantra.yfs.japi.YFSEnvironment;
+import com.yantra.yfs.japi.YFSException;
 import com.yantra.yfs.japi.YFSUserExitException;
 import com.yantra.ypm.japi.ue.YPMCalculateShippingChargeUE;
 import com.custom.yantra.util.*;
 
-public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChargeUE
+public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChargeUE 
 {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -32,22 +33,23 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 			System.out.println (docOrder.getString());
 		}
 		YFCElement	eleOrder = docOrder.getDocumentElement();
-		
-		// Only do this calculation for B2C Sales Orders
-		String sDocumentType = eleOrder.getAttribute("DocumentType");
-		String sEnterpriseCode = eleOrder.getAttribute("EnterpriseCode");
-		String sCustomerID = eleOrder.getAttribute("CustomerID");
-		if (!YFCObject.isNull(sDocumentType) && !"0001".equals(sDocumentType) || (sEnterpriseCode.startsWith("AuroraCPG") && !sCustomerID.startsWith("CUST")))
-			return docIn;
-		
 		YFCElement	eleShipping = eleOrder.getChildElement("Shipping");
-		Hashtable	htCarrierServicePrices = getCarrierServicePrices (env, eleOrder.getAttribute ("EnterpriseCode"), eleOrder.getAttribute("Currency"));
 		BigDecimal	bdTotalShippingCharges = new BigDecimal (0);
-		
-		// default values
-		eleShipping.setAttribute ("ShippingCharge", "0.00");
-		eleShipping.setAttribute ("MinimizeNumberOfShipments", "N");
-		
+		Hashtable	htCarrierServicePrices;
+		try {
+			// Only do this calculation for B2C Sales Orders
+			String sDocumentType = eleOrder.getAttribute("DocumentType");
+			if (!YFCObject.isNull(sDocumentType) && !"0001".equals(sDocumentType) || !IsD2C(env, eleOrder))
+				return docIn;
+			
+			htCarrierServicePrices = getCarrierServicePrices (env, eleOrder.getAttribute ("EnterpriseCode"), eleOrder.getAttribute("Currency"));
+			
+			// default values
+			eleShipping.setAttribute ("ShippingCharge", "0.00");
+			eleShipping.setAttribute ("MinimizeNumberOfShipments", "N");
+		} catch (Exception e) {
+			throw new YFSUserExitException (e.getMessage());
+		}
 		// check to see if all lines shipping via the same carrier service
 		if (!YFCCommon.isVoid(eleOrder.getAttribute("OrderReference")))
 		{
@@ -177,4 +179,48 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 		}
 		return htCarrierServiceCosts;
 	}
+
+	private boolean IsD2C (YFSEnvironment env, YFCElement eleOrder) throws Exception
+	{
+		YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
+		boolean	bRet = false;
+		
+		String	sEnterpriseCode = eleOrder.getAttribute ("EnterpriseCode");
+		String	sCustomerID = eleOrder.getAttribute("CustomerID");
+		if (!YFCObject.isVoid(sCustomerID))
+		{
+			YFCDocument	docCustomer = YFCDocument.createDocument("Customer");
+			YFCElement	eleCustomer = docCustomer.getDocumentElement();
+			
+			YFCDocument	docCustomerOutputTemplate = YFCDocument.getDocumentFor ("<Customer CustomerID=\"\" CustomerType=\"\"/>");
+			eleCustomer.setAttribute("OrganizationCode", sEnterpriseCode);
+			eleCustomer.setAttribute("CustomerID", sCustomerID);
+			env.setApiTemplate ("getCustomerDetails", docCustomerOutputTemplate.getDocument());
+			if (YFSUtil.getDebug())
+			{
+				System.out.println ("Input to getCustomerDetails:");
+				System.out.println (docCustomer.getString());
+			}
+			docCustomer = YFCDocument.getDocumentFor (api.getCustomerDetails (env, docCustomer.getDocument()));
+			env.clearApiTemplate ("getCustomerDetails");
+			eleCustomer = docCustomer.getDocumentElement();
+			if (YFSUtil.getDebug())
+			{
+				System.out.println ("Output from getCustomerDetails:");
+				System.out.println (docCustomer.getString());
+			}
+
+			// if CustomerType=02
+			if (!YFCObject.isVoid(eleCustomer.getAttribute("CustomerType")))
+			{
+				// get the values to test from Condition Args (OrderType, CustomerLevel)
+				String sTestCustomerType = (String) eleCustomer.getAttribute("CustomerType");
+
+				if (sTestCustomerType.equals ("02"))				
+					bRet = true;
+			}
+		}
+		return bRet;
+	}
+
 }

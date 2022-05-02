@@ -52,6 +52,7 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 				System.out.println ("\nSE Dynamic Condition Executing");
 				System.out.println ("name="+name);
 				System.out.println ("xmlData="+xmlData);
+				System.out.println ("mapData=" + mapData.toString());
 				Iterator	iProps = m_props.keySet().iterator();
 				System.out.println ("Condition Properties:");
 				while (iProps.hasNext())
@@ -187,6 +188,74 @@ public class SEDynamicConditionsImpl implements YCPDynamicCondition, YCPDynamicC
 					if (sTestCustomerLevel.equals (eleCustomer.getAttribute("CustomerLevel"))
 					&&  sTestOrderType.equals(eleOrder.getAttribute ("OrderType")))				
 						bRet ^= true;
+			}
+			else if (name.startsWith ("Is D2C") || name.startsWith ("Not Is D2C"))
+			{
+				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
+				String		sOrderHeaderKey;
+				if (!YFCObject.isVoid(xmlData))
+				{
+					YFCDocument docXMLData = YFCDocument.getDocumentFor (xmlData);
+					YFCElement  eleXMLData = docXMLData.getDocumentElement();
+					sOrderHeaderKey = eleXMLData.getAttribute("OrderHeaderKey");
+				}
+				else
+					sOrderHeaderKey = (String)mapData.get("OrderHeaderKey");
+				
+				YFCDocument docOrder = YFCDocument.createDocument("Order");
+				YFCElement	eleOrder = docOrder.getDocumentElement();
+				eleOrder.setAttribute("OrderHeaderKey", sOrderHeaderKey);
+				
+				YFCDocument	docOrderOutputTemplate = YFCDocument.getDocumentFor ("<Order BillToID=\"\" OrderType=\"\" EnterpriseCode=\"\"/>");
+				env.setApiTemplate ("getOrderDetails", docOrderOutputTemplate.getDocument());
+				if (YFSUtil.getDebug())
+				{
+					System.out.println ("Input to getOrderDetails:");
+					System.out.println (docOrder.getString());
+				}
+				docOrder = YFCDocument.getDocumentFor (api.getOrderDetails (env, docOrder.getDocument()));
+				eleOrder = docOrder.getDocumentElement();
+				env.clearApiTemplate ("getOrderDetails");
+				if (YFSUtil.getDebug())
+				{
+					System.out.println ("Output from getOrderDetails:");
+					System.out.println (docOrder.getString());
+				}
+				String	sEnterpriseCode = eleOrder.getAttribute ("EnterpriseCode");
+				String	sCustomerID = eleOrder.getAttribute("BillToID");
+				if (!YFCObject.isVoid(sCustomerID))
+				{
+					YFCDocument	docCustomer = YFCDocument.createDocument("Customer");
+					YFCElement	eleCustomer = docCustomer.getDocumentElement();
+					
+					YFCDocument	docCustomerOutputTemplate = YFCDocument.getDocumentFor ("<Customer CustomerID=\"\" CustomerType=\"\"/>");
+					eleCustomer.setAttribute("OrganizationCode", sEnterpriseCode);
+					eleCustomer.setAttribute("CustomerID", sCustomerID);
+					env.setApiTemplate ("getCustomerDetails", docCustomerOutputTemplate.getDocument());
+					if (YFSUtil.getDebug())
+					{
+						System.out.println ("Input to getCustomerDetails:");
+						System.out.println (docCustomer.getString());
+					}
+					docCustomer = YFCDocument.getDocumentFor (api.getCustomerDetails (env, docCustomer.getDocument()));
+					env.clearApiTemplate ("getCustomerDetails");
+					eleCustomer = docCustomer.getDocumentElement();
+					if (YFSUtil.getDebug())
+					{
+						System.out.println ("Output from getCustomerDetails:");
+						System.out.println (docCustomer.getString());
+					}
+
+					// if CustomerType=02
+					if (!YFCObject.isVoid(eleCustomer.getAttribute("CustomerType")))
+					{
+						// get the values to test from Condition Args (OrderType, CustomerLevel)
+						String sTestCustomerType = (String) eleCustomer.getAttribute("CustomerType");
+
+						if (sTestCustomerType.equals ("02"))				
+							bRet ^= true;
+					}
+				}
 			}
 
 			if (bDebug)
