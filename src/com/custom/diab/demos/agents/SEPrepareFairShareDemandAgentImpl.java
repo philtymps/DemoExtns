@@ -267,7 +267,7 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 					sOrganizationCode = "DEFAULT";
 			    YIFApi api = YIFClientFactory.getInstance().getLocalApi ();
 
-				// persist common code entry for this OLK's demand details
+				// collect total supply and demand details for the given OLK
 				collectDemandsAndSupplies(env, eleOrderLineList);
 				
 			    // Update common code demands/supplies and status of order lines being updated for fair share agent

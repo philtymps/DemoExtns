@@ -234,13 +234,13 @@ public class SEFairShareAllocationAgentImpl extends YCPBaseTaskAgent implements 
 			List<String> lstSupplyDemand = Arrays.asList(eleCommonCode.getAttribute("CodeShortDescription").split("\\s*#\\s*"));
 			List<String> lstNodedQty = Arrays.asList(eleCommonCode.getAttribute("CodeLongDescription").split("\\s*#\\s*"));
 			// CommonCode Value			   =  OrderLineKey
-			// CommonCode ShortDescription = "TOTALSUPPLY,TOTALDEMAND,TOTALSHORTAGE"
+			// CommonCode ShortDescription = "TOTALSUPPLY#TOTALDEMAND#TOTALSHORTAGE"
 			// CommonCode LongDescription  = "SHIPNODE1#QTY,SHIPNODE2#QTY..."
 			YFCDocument docOrderLineDetailTemplate = YFCDocument.getDocumentFor("<OrderLine OrderHeaderKey=\"\" OrderLineKey=\"\" OrderedQty=\"\" ShipToID=\"\"><Item ItemID=\"\" UnitOfMeasure=\"\" ProductClass=\"\"/><Order OrderType=\"\" EnterpriseCode=\"\" OrderHeaderKey=\"\" BillToID=\"\" ShipToID=\"\" OrderNo=\"\"></Order><OrderStatuses><OrderStatus/></OrderStatuses></OrderLine>");
 			YFCDocument docOrderLineDetail = YFCDocument.getDocumentFor("<OrderLineDetail OrderLineKey=\"" + sOLK + "\"/>");
 		    env.setApiTemplate("getOrderLineDetails", docOrderLineDetailTemplate.getDocument());
 		    
-		    // sometimes lingering OLK's will be in common code table.  Make sure this one is valid
+		    // sometimes (due to exceptions in these agents) orphaned OLK's will be in common code table.  Make sure this one is valid
 		    if (IsValidOrderLine (eleOrder, sOLK))
 		    {
 			    if (YFSUtil.getDebug())
