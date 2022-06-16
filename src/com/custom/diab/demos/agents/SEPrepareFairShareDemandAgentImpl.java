@@ -174,7 +174,7 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 					}
 					
 				    try {
-						YFCDocument docOrderLineListTemplate = YFCDocument.getDocumentFor("<OrderLineList><OrderLine OrderNo=\"\" OrderHeaderKey=\"\" OrderLineKey=\"\" OrderedQty=\"\" ShipToID=\"\"/></OrderLineList>");
+						YFCDocument docOrderLineListTemplate = YFCDocument.getDocumentFor("<OrderLineList><OrderLine OrderNo=\"\" OrderHeaderKey=\"\" OrderLineKey=\"\" OrderedQty=\"\" MinLineStatus=\"\" ShipToID=\"\"/></OrderLineList>");
 						YFCDocument docOrderLineList = YFCDocument.getDocumentFor("<OrderLine OrganizationCode=\""+ sOrganizationCode + "\"/>");
 						
 						YFCElement	eleOrderLineList = docOrderLineList.getDocumentElement();						
@@ -275,6 +275,12 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 				{
 					YFCElement	eleOrderLineNext = (YFCElement)iOrderLineList.next();
 
+					// ignore lines beyond scheduled status or before back ordered status
+					if (eleOrderLineNext.getAttribute("MinLineStatus").compareTo("1500") > 0 ||
+						eleOrderLineNext.getAttribute("MinLineStatus").compareTo("1300") < 0)
+						continue;
+					
+
 					String		sOLK	  = eleOrderLineNext.getAttribute ("OrderLineKey");					
 					persistDemandInCommonCodeTable (env, sOrganizationCode, eleOrderLineNext);
 					if (YFSUtil.getDebug())
@@ -284,18 +290,20 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 						String		sTotalShortage = eleOrderLineList.getAttribute("TotalShortage");
 						System.out.println ("Successfully Persisted New Demand for OLK=" + sOLK + " TOTALSUPPLY#TOTALDEMAND#TOTALSHORTAGE=" + sTotalSupply + "#" + sTotalDemand + "#" + sTotalShortage);
 					}
-													
+
+					
 					// update status of lines to "Ready for Fair Share Allocation"
 					YFCDocument docChangeOrderStatus = YFCDocument.createDocument("OrderStatusChange");
 					YFCElement	eleChangeOrderStatus = docChangeOrderStatus.getDocumentElement();
 					eleChangeOrderStatus.setAttribute("OrderHeaderKey", eleOrderLineNext.getAttribute("OrderHeaderKey"));
 					eleChangeOrderStatus.setAttribute("BaseDropStatus", "1300.100");
 					eleChangeOrderStatus.setAttribute("TransactionId", eleOrderLineList.getAttribute("TransactionId"));
+					eleChangeOrderStatus.setAttribute("ChangeForAllAvailableQty", "Y");
 					YFCElement eleOrderLines = eleChangeOrderStatus.createChild("OrderLines");
 					YFCElement eleOrderLine = eleOrderLines.createChild("OrderLine");
 					eleOrderLine.setAttribute("OrderLineKey", eleOrderLineNext.getAttribute("OrderLineKey"));
 					YFCElement	eleOrderLineTranQuantity = eleOrderLine.createChild("OrderLineTranQuantity");
-					eleOrderLineTranQuantity.setAttribute("Quantity", eleOrderLineNext.getAttribute("OrderedQty"));
+					//eleOrderLineTranQuantity.setAttribute("Quantity", eleOrderLineNext.getAttribute("OrderedQty"));
 					eleOrderLineTranQuantity.setAttribute("TransactionalUOM", eleOrderLineList.getAttribute("UnitOfMeasure"));
 							
 					if (YFSUtil.getDebug())
@@ -303,8 +311,11 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 						System.out.println ("Input to changeOrderStatus API:");
 						System.out.println (docChangeOrderStatus.getString());
 					}
+					try {
 					api.changeOrderStatus (env, docChangeOrderStatus.getDocument());
-					
+					} catch (Exception ignore) {
+						
+					}
 				}
 				// safe to delete the IBA Trigger
 				deleteIBATrigger (env, sIBATriggerKey);

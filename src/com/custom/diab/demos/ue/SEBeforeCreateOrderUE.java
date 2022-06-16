@@ -11,11 +11,13 @@ import com.custom.diab.demos.api.SEWebOrderExtensions;
 import com.custom.yantra.util.YFSUtil;
 import com.yantra.interop.japi.YIFApi;
 import com.yantra.yfc.core.YFCObject;
+import com.yantra.yfc.date.YTimestamp;
 import com.yantra.yfc.dom.YFCDocument;
 import com.yantra.yfc.dom.YFCElement;
 import com.yantra.yfs.japi.YFSEnvironment;
 import com.yantra.yfs.japi.YFSUserExitException;
 import com.yantra.yfs.japi.ue.YFSBeforeCreateOrderUE;
+import com.custom.diab.demos.api.CPGGetCustomerItemDemand;
 
 public class SEBeforeCreateOrderUE implements YFSBeforeCreateOrderUE {
 
@@ -36,12 +38,31 @@ public class SEBeforeCreateOrderUE implements YFSBeforeCreateOrderUE {
 		// CPG Demo Only
 		String		sBuyerOrganizationCode = eleOrder.getAttribute ("BuyerOrganizationCode");
 		String		sEnterpriseCode = eleOrder.getAttribute("EnterpriseCode");
-		
-		if (!YFCObject.isVoid(sEnterpriseCode) && sEnterpriseCode.startsWith("AuroraCPG")
-		&& !YFCObject.isVoid(sBuyerOrganizationCode) && sBuyerOrganizationCode.startsWith("CPG"))
+		if (YFSUtil.getDebug())
 		{
+			System.out.println("Input to beforeCreateOrder UE:");
+			System.out.println(docOrder.getString());
+		}
+		
+		if (!eleOrder.getAttribute("DocumentType").equals("0001"))
+			return docInXML;
+		
+		if (!YFCObject.isVoid(sEnterpriseCode) && sEnterpriseCode.startsWith("AuroraCPG"))
+		{
+			CPGGetCustomerItemDemand	cpgCID = new CPGGetCustomerItemDemand ();
+			
 			convertUPCToCustomerItem (env, eleOrder);
 			
+			// If no BuyerOrganizationCode or BillToID is passed, use CustomerID 
+			if (YFCObject.isVoid(sBuyerOrganizationCode) && YFCObject.isVoid(eleOrder.getAttribute("BillToID")))
+				eleOrder.setAttribute("BillToID", eleOrder.getAttribute("CustomerID"));
+			eleOrder.setAttribute ("PriorityCode", cpgCID.getCustomerLevel(env, eleOrder));
+			
+			if (YFSUtil.getDebug())
+			{
+				System.out.println("Output from beforeCreateOrder UE:");
+				System.out.println(docOrder.getString());
+			}
 			return docOrder.getDocument();
 		}
 		else if (!YFCObject.isVoid (sEnterpriseCode) && sEnterpriseCode.equals("Aurora"))
@@ -53,6 +74,7 @@ public class SEBeforeCreateOrderUE implements YFSBeforeCreateOrderUE {
 			return docInXML;
 	}
 	
+
 	public void setProperties (Properties props) throws Exception
 	{
 		m_props=props;

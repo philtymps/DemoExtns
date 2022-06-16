@@ -236,7 +236,7 @@ public class SEFairShareAllocationAgentImpl extends YCPBaseTaskAgent implements 
 			// CommonCode Value			   =  OrderLineKey
 			// CommonCode ShortDescription = "TOTALSUPPLY,TOTALDEMAND,TOTALSHORTAGE"
 			// CommonCode LongDescription  = "SHIPNODE1#QTY,SHIPNODE2#QTY..."
-			YFCDocument docOrderLineDetailTemplate = YFCDocument.getDocumentFor("<OrderLine OrderHeaderKey=\"\" OrderLineKey=\"\" OrderedQty=\"\" ShipToID=\"\"><Item ItemID=\"\" UnitOfMeasure=\"\" ProductClass=\"\"/><Order OrderType=\"\" EnterpriseCode=\"\" OrderHeaderKey=\"\" BillToID=\"\" ShipToID=\"\" OrderNo=\"\"></Order></OrderLine>");
+			YFCDocument docOrderLineDetailTemplate = YFCDocument.getDocumentFor("<OrderLine OrderHeaderKey=\"\" OrderLineKey=\"\" OrderedQty=\"\" ShipToID=\"\"><Item ItemID=\"\" UnitOfMeasure=\"\" ProductClass=\"\"/><Order OrderType=\"\" EnterpriseCode=\"\" OrderHeaderKey=\"\" BillToID=\"\" ShipToID=\"\" OrderNo=\"\"></Order><OrderStatuses><OrderStatus/></OrderStatuses></OrderLine>");
 			YFCDocument docOrderLineDetail = YFCDocument.getDocumentFor("<OrderLineDetail OrderLineKey=\"" + sOLK + "\"/>");
 		    env.setApiTemplate("getOrderLineDetails", docOrderLineDetailTemplate.getDocument());
 		    
@@ -316,12 +316,12 @@ public class SEFairShareAllocationAgentImpl extends YCPBaseTaskAgent implements 
 		String		sEnterpriseCode = eleOrder.getAttribute ("EnterpriseCode");
 		String		sCustomerID = eleOrder.getAttribute("BillToID");
 
-		BigDecimal	bdOrderedQty = new BigDecimal (eleOrderLineDetail.getAttribute("OrderedQty"));
+		BigDecimal	bdOrderedQty = new BigDecimal (getQtyToSplit(eleOrderLineDetail));
 		
 		BigDecimal  bdProportionalPercent = bdOrderedQty.divide(bdTotalDemand, mc);
 		
 		// 
-		if (bdProportionalPercent.compareTo(BigDecimal.valueOf(1L)) >= 0)
+		//if (bdProportionalPercent.compareTo(BigDecimal.valueOf(1L)) >= 0)
 				
 				
 		System.out.println ("bdTotalSupply = " + bdTotalSupply.toString());
@@ -340,44 +340,73 @@ public class SEFairShareAllocationAgentImpl extends YCPBaseTaskAgent implements 
 			System.out.println ("bdProportionalPercent  = " + bdProportionalPercent.toString());
 			bdSplitQty = bdOrderedQty.subtract(bdTotalSupply.multiply(bdProportionalPercent, mc));
 		}
+		else if (sMethod.equals("CUSTOMAPI"))
+		{
+			String		sDocCustomerItemDemand = "<CustomerItemDemand CustomerID=\"" + sCustomerID + "\" ItemID=\"" + eleItem.getAttribute("ItemID") +
+												 "\" UnitOfMeasure=\"" + eleItem.getAttribute("UnitOfMeasure") +
+												 "\" RequestedQty=\"" + bdOrderedQty.toString() + "\"/>";
+			
+			
+			System.out.println ("Input to Custom API: " + eleTransactionFilters.getAttribute("FlowName"));
+			System.out.println (sDocCustomerItemDemand);
+
+			YFCDocument	docCustomerItemDemand = YFCDocument.getDocumentFor(sDocCustomerItemDemand);
+			
+			docCustomerItemDemand = getCustomSplitQty (env, docCustomerItemDemand, eleTransactionFilters.getAttribute("FlowName"));
+			System.out.println ("Output from Custom API:" + eleTransactionFilters.getAttribute("FlowName"));
+			System.out.println (docCustomerItemDemand.getString());
+			bdSplitQty = new BigDecimal(docCustomerItemDemand.getDocumentElement().getAttribute("SplitQty"));
+			
+		}
 		
 		BigInteger biQtyToSplit = bdSplitQty.toBigInteger();
 		System.out.println ("Split Qty: " + biQtyToSplit.toString());
 		
-		// if QTY to Split is < 0 then make it a minimum of 1 - ideally we would auto-cancel these lines
-		if (biQtyToSplit.longValue() == 0)
-			biQtyToSplit = BigInteger.valueOf(1);
-		
-		eleSplitOrderLine.setAttribute("OrderHeaderKey", eleOrder.getAttribute("OrderHeaderKey"));
-		YFCElement	eleOrderLines = eleSplitOrderLine.createChild("OrderLines");
-		YFCElement	eleOrderLine = eleOrderLines.createChild("OrderLine");
-		eleOrderLine.setAttribute("OrderLineKey", eleOrderLineDetail.getAttribute("OrderLineKey"));
-		eleOrderLine.setAttribute("QuantityToSplit", biQtyToSplit.toString());
-		
-		// calculate EarliestScheduleDate for split lines using criteria value HoursToDelaySchedulingOfSplitLines
-		YTimestamp	dtNextScheduleDate = YTimestamp.newMutableTimestamp (System.currentTimeMillis());
-		
-		dtNextScheduleDate.addHours(iHoursToDelayScheduling);
-		System.out.println ("Next Schedule Date for Split Lines: " + dtNextScheduleDate.getString());
-		
-		YFCElement	eleSplitLines = eleOrderLine.createChild("SplitLines");
-		YFCElement	eleSplitLine = eleSplitLines.createChild("SplitLine");
-		eleSplitLine.setAttribute("OrderedQty", biQtyToSplit.toString());
-		eleSplitLine.setDateTimeAttribute ("AllocationDate", dtNextScheduleDate);
-		eleSplitLine.setDateTimeAttribute ("EarliestScheduleDate", dtNextScheduleDate);
-		eleSplitLine.setDateTimeAttribute ("ReqShipDate", dtNextScheduleDate);
-		
-	    if (YFSUtil.getDebug())
-	    {
-	    	System.out.println ("Input to splitLine API:");
-	    	System.out.println (docSplitOrderLine.getString());
-	    }
-	    docSplitOrderLine = YFCDocument.getDocumentFor(api.splitLine(env,  docSplitOrderLine.getDocument()));
-	    if (YFSUtil.getDebug())
-	    {
-	    	System.out.println ("Output from splitLine API:");
-	    	System.out.println (docSplitOrderLine.getString());
-	    }
+		// if QTY to Split is <= 0 then we won't split this line
+		if (biQtyToSplit.longValue() >= 0)
+		{
+			
+			eleSplitOrderLine.setAttribute("OrderHeaderKey", eleOrder.getAttribute("OrderHeaderKey"));
+			YFCElement	eleOrderLines = eleSplitOrderLine.createChild("OrderLines");
+			YFCElement	eleOrderLine = eleOrderLines.createChild("OrderLine");
+			eleOrderLine.setAttribute("OrderLineKey", eleOrderLineDetail.getAttribute("OrderLineKey"));
+			
+			
+			eleOrderLine.setAttribute("QuantityToSplit", biQtyToSplit.toString());
+			
+			// calculate EarliestScheduleDate for split lines using criteria value HoursToDelaySchedulingOfSplitLines
+			YTimestamp	dtNextScheduleDate = YTimestamp.newMutableTimestamp (System.currentTimeMillis());
+			
+			dtNextScheduleDate.addHours(iHoursToDelayScheduling);
+			System.out.println ("Next Schedule Date for Split Lines: " + dtNextScheduleDate.getString());
+			
+			YFCElement	eleSplitLines = eleOrderLine.createChild("SplitLines");
+			YFCElement	eleSplitLine = eleSplitLines.createChild("SplitLine");
+			eleSplitLine.setAttribute("OrderedQty", biQtyToSplit.toString());
+			eleSplitLine.setDateTimeAttribute ("AllocationDate", dtNextScheduleDate);
+			eleSplitLine.setDateTimeAttribute ("EarliestScheduleDate", dtNextScheduleDate);
+			eleSplitLine.setDateTimeAttribute ("ReqShipDate", dtNextScheduleDate);
+			
+		    if (YFSUtil.getDebug())
+		    {
+		    	System.out.println ("Input to splitLine API:");
+		    	System.out.println (docSplitOrderLine.getString());
+		    }
+		    docSplitOrderLine = YFCDocument.getDocumentFor(api.splitLine(env,  docSplitOrderLine.getDocument()));
+		    if (YFSUtil.getDebug())
+		    {
+		    	System.out.println ("Output from splitLine API:");
+		    	System.out.println (docSplitOrderLine.getString());
+		    }		
+		}
+		else
+		{
+		    if (YFSUtil.getDebug())
+		    {
+		    	System.out.println ("Split Qty <= 0 - Line Not Split");
+		    }
+
+		}
 	}
 
 	private YFCDocument getOrderKeyDetails (YFSEnvironment env, String sOrderHeaderKey) throws Exception
@@ -399,6 +428,37 @@ public class SEFairShareAllocationAgentImpl extends YCPBaseTaskAgent implements 
 	    	System.out.println (docOrder.getString());
 	    }
 	    return docOrder;
+	}
+	
+	private YFCDocument getCustomSplitQty (YFSEnvironment env, YFCDocument docCustomerItemDemand, String sFlowName) throws Exception
+	{
+	    YIFApi api = YIFClientFactory.getInstance().getLocalApi ();
+	    if (YFSUtil.getDebug())
+	    {
+	    	System.out.println ("Input to getCustomerSplitQty:");
+	    	System.out.println (docCustomerItemDemand.getString());
+	    }
+	    docCustomerItemDemand = YFCDocument.getDocumentFor(api.executeFlow(env, sFlowName, docCustomerItemDemand.getDocument()));
+	    if (YFSUtil.getDebug())
+	    {
+	    	System.out.println ("Output from getCustomeSplitQty:");
+	    	System.out.println (docCustomerItemDemand.getString());
+	    }
+	    return docCustomerItemDemand;
+		
+	}
+	
+	private double getQtyToSplit(YFCElement eleOrderLineDetail)
+	{
+		YFCElement	eleOrderLineStatuses = eleOrderLineDetail.getChildElement("OrderStatuses");
+		Iterator <YFCElement>	iOrderLineStatuses = eleOrderLineStatuses.getChildren();
+		while (iOrderLineStatuses.hasNext())
+		{
+			YFCElement	eleOrderLineStatus = iOrderLineStatuses.next();
+			if (eleOrderLineStatus.getAttribute("Status").equals("1300.100"))
+				return (eleOrderLineStatus.getDoubleAttribute("StatusQty"));
+		}
+		return (eleOrderLineDetail.getDoubleAttribute("OrderedQty"));
 	}
 	
 	private	boolean IsValidOrderLine (YFCElement eleOrder, String sOrderLineKey)
@@ -495,23 +555,23 @@ public class SEFairShareAllocationAgentImpl extends YCPBaseTaskAgent implements 
 			// Hard Code Percentages for now...Use COMMON CODE table later...
 			if (sCustomerLevel.equals("TIER_0"))
 			{
-				return .25; // should compute to 50 after recalc
+				return .60; // should compute to 50 after recalc
 			}
 			else if (sCustomerLevel.equals("TIER_1"))
 			{
-				return .20;  // should compute to 26 after recalc
+				return .50;  // should compute to 26 after recalc
 			}
 			else if (sCustomerLevel.equals("TIER_2"))
 			{
-				return .18;  // should compute to 14 after recalc
+				return .40;  // should compute to 14 after recalc
 			}
 			else if (sCustomerLevel.equals("TIER_3"))
 			{
-				return .15;	// should compute to 10 after recalc
+				return .30;	// should compute to 10 after recalc
 			}
 			else if (sCustomerLevel.equals("TIER_4"))
 			{
-				return .12;				
+				return .20;				
 			}
 			else
 				return .10;
