@@ -296,16 +296,39 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 					YFCDocument docChangeOrderStatus = YFCDocument.createDocument("OrderStatusChange");
 					YFCElement	eleChangeOrderStatus = docChangeOrderStatus.getDocumentElement();
 					eleChangeOrderStatus.setAttribute("OrderHeaderKey", eleOrderLineNext.getAttribute("OrderHeaderKey"));
-					eleChangeOrderStatus.setAttribute("BaseDropStatus", "1300.100");
 					eleChangeOrderStatus.setAttribute("TransactionId", eleOrderLineList.getAttribute("TransactionId"));
-					eleChangeOrderStatus.setAttribute("ChangeForAllAvailableQty", "Y");
+
+					//eleChangeOrderStatus.setAttribute("BaseDropStatus", "1300.100");
+					//eleChangeOrderStatus.setAttribute("ChangeForAllAvailableQty", "N");
 					YFCElement eleOrderLines = eleChangeOrderStatus.createChild("OrderLines");
 					YFCElement eleOrderLine = eleOrderLines.createChild("OrderLine");
-					eleOrderLine.setAttribute("OrderLineKey", eleOrderLineNext.getAttribute("OrderLineKey"));
 					YFCElement	eleOrderLineTranQuantity = eleOrderLine.createChild("OrderLineTranQuantity");
-					//eleOrderLineTranQuantity.setAttribute("Quantity", eleOrderLineNext.getAttribute("OrderedQty"));
+					eleOrderLine.setAttribute("OrderLineKey", eleOrderLineNext.getAttribute("OrderLineKey"));
+					eleOrderLine.setAttribute ("ChangeForAllAvailableQty", "Y");
+					eleOrderLine.setAttribute("BaseDropStatus", "1300.100");
+					eleOrderLineTranQuantity.setAttribute("Quantity", eleOrderLineNext.getAttribute("OrderedQty"));
 					eleOrderLineTranQuantity.setAttribute("TransactionalUOM", eleOrderLineList.getAttribute("UnitOfMeasure"));
-							
+					
+					/*
+					double	dblBackorderedQty = eleOrderLineNext.getDoubleAttribute ("TotalBackorderedQty");
+					double	dblScheduledQty = eleOrderLineNext.getDoubleAttribute ("TotalScheduledQty");
+					if (dblScheduledQty > 0)
+					{
+						YFCElement eleOrderLine = eleOrderLines.createChild("OrderLine");
+						YFCElement	eleOrderLineTranQuantity = eleOrderLine.createChild("OrderLineTranQuantity");
+						eleOrderLine.setAttribute("OrderLineKey", eleOrderLineNext.getAttribute("OrderLineKey"));
+						eleOrderLineTranQuantity.setAttribute("Quantity", dblScheduledQty);
+						eleOrderLineTranQuantity.setAttribute("TransactionalUOM", eleOrderLineList.getAttribute("UnitOfMeasure"));
+					}
+					if (dblBackorderedQty > 0)
+					{
+						YFCElement eleOrderLine = eleOrderLines.createChild("OrderLine");
+						YFCElement	eleOrderLineTranQuantity = eleOrderLine.createChild("OrderLineTranQuantity");
+						eleOrderLine.setAttribute("OrderLineKey", eleOrderLineNext.getAttribute("OrderLineKey"));
+						eleOrderLineTranQuantity.setAttribute("Quantity", dblBackorderedQty);
+						eleOrderLineTranQuantity.setAttribute("TransactionalUOM", eleOrderLineList.getAttribute("UnitOfMeasure"));
+					}
+					*/
 					if (YFSUtil.getDebug())
 					{
 						System.out.println ("Input to changeOrderStatus API:");
@@ -343,22 +366,22 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
     	{
     		YFCElement	eleLineNext = iOrderLineList.next();
     		YFCDocument	docOrderLineStatusTemplate = YFCDocument.getDocumentFor("<OrderLineStatusList><OrderStatus OrderHeaderKey=\"\" OrderLineKey=\"\" StatusDescription=\"\" Status=\"\" StatusQty=\"\" ShipNode=\"\" TotalQuantity=\"\"/></OrderLineStatusList>");
-    		YFCDocument docOrderLineStatus = YFCDocument.getDocumentFor("<OrderLineStatus OrderHeaderKey=\"" + eleLineNext.getAttribute("OrderHeaderKey") + "\" OrderLineKey=\"" + eleLineNext.getAttribute("OrderLineKey") + "\"/>");
+    		YFCDocument docOrderLineStatusList = YFCDocument.getDocumentFor("<OrderLineStatus OrderHeaderKey=\"" + eleLineNext.getAttribute("OrderHeaderKey") + "\" OrderLineKey=\"" + eleLineNext.getAttribute("OrderLineKey") + "\"/>");
     		env.setApiTemplate("getOrderLineStatusList", docOrderLineStatusTemplate.getDocument());
     		if (YFSUtil.getDebug())
     		{
     			System.out.println ("Input to getOrderLineStatusList API:");
-    			System.out.println (docOrderLineStatus.getString());
+    			System.out.println (docOrderLineStatusList.getString());
     		}
-    		docOrderLineStatus = YFCDocument.getDocumentFor(api.getOrderLineStatusList(env, docOrderLineStatus.getDocument()));
+    		docOrderLineStatusList = YFCDocument.getDocumentFor(api.getOrderLineStatusList(env, docOrderLineStatusList.getDocument()));
     		if (YFSUtil.getDebug())
     		{
     			System.out.println ("Output from getOrderLineStatusList API:");
-    			System.out.println (docOrderLineStatus.getString());
+    			System.out.println (docOrderLineStatusList.getString());
     		}
     		env.clearApiTemplate("getOrderLineStatusList");
     		
-    		YFCElement	eleOrderLineStatusList = docOrderLineStatus.getDocumentElement();
+    		YFCElement	eleOrderLineStatusList = docOrderLineStatusList.getDocumentElement();
     		dblTotalOrderedQty = dblTotalOrderedQty + eleLineNext.getDoubleAttribute("OrderedQty");
     		dblTotalScheduledQty = dblTotalScheduledQty + getScheduledQty (eleOrderLineStatusList);
     		dblTotalShortQty = dblTotalShortQty + getBackorderedQty (eleOrderLineStatusList);
@@ -366,7 +389,9 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 		eleOrderLineList.setAttribute ("TotalDemand", dblTotalOrderedQty);
 		eleOrderLineList.setAttribute ("TotalSupply", dblTotalScheduledQty);
 		eleOrderLineList.setAttribute ("TotalShortage", dblTotalShortQty);
-	}
+		eleOrderLineList.setDoubleAttribute("TotalScheduledQty", dblTotalScheduledQty);
+		eleOrderLineList.setDoubleAttribute("TotalBackorderedQty", dblTotalShortQty);
+	}	
 
 	private void deleteIBATrigger(YFSEnvironment env, String sIBATriggerKey) throws Exception
 	{
