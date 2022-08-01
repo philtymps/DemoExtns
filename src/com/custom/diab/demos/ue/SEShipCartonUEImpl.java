@@ -35,7 +35,7 @@ public class SEShipCartonUEImpl implements YCSshipCartonUserExit {
 		}
 		String sTrackingNumber = String.valueOf(System.currentTimeMillis());
 		// TODO Auto-generated method stub
-		String strOut = "<ShipCarton BilledWeight='3' NetCharge='3' TrackingNumber='"+sTrackingNumber+"' PierbridgeLabelURL='http://sterlingbda:7002/diab/images/CartonLabel.pdf'></ShipCarton>";
+		String strOut = "<ShipCarton BilledWeight='3' NetCharge='3' TrackingNumber='"+sTrackingNumber+"' PierbridgeLabelURL='http://oms.innovationcloud.info/images/diab/CartonLabel.pdf'></ShipCarton>";
 
 		return strOut;
 	}
