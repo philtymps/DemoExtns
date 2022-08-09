@@ -9,6 +9,7 @@ package com.custom.diab.demos.ue;
 import com.custom.yantra.util.YFSUtil;
 import com.yantra.interop.japi.YIFApi;
 import com.yantra.interop.japi.YIFClientFactory;
+import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.*;
 import com.yantra.yfc.util.YFCCommon;
 import com.yantra.yfc.util.YFCDate;
@@ -16,6 +17,7 @@ import com.yantra.yfs.japi.YFSEnvironment;
 import com.yantra.yfs.japi.YFSUserExitException;
 import com.yantra.yfs.japi.ue.OMPGetCarrierServiceOptionsForOrderingUE;
 
+import java.util.Hashtable;
 import java.util.Iterator;
 import org.w3c.dom.Document;
 
@@ -101,8 +103,45 @@ public class SEGetCarrierServiceOptionsForOrderingUEImpl implements OMPGetCarrie
 		    		}
 				}
 	        }
-        }
+		}
 		// remove carrier service options that don't apply or make sense for specific items
+		String						sBillToID = getBillToID(env, eleOrder);
+		Hashtable<String,String>	htCustomerCarriersAndServices = new Hashtable<String, String>();
+		
+		if (!YFCObject.isNull("sBillToID"))
+		{
+			docCommonCode = YFCDocument.createDocument("CommonCode");
+			eleCommonCode = docCommonCode.getDocumentElement();
+			
+			eleCommonCode.setAttribute ("CodeType", "CPG_SHIPPING_GROUPS");
+			eleCommonCode.setAttribute("CallingOrganizationCode", eleOrder.getAttribute ("EnterpriseCode"));
+			eleCommonCodes = null;
+			try {
+				YIFApi	api = YIFClientFactory.getInstance().getLocalApi();
+				if (YFSUtil.getDebug()) {
+					System.out.println ("Input to getCommonCodeList() API:");
+					System.out.println (docCommonCode.getString());
+				}
+				YFCDocument docOut = YFCDocument.getDocumentFor (api.getCommonCodeList (env, docCommonCode.getDocument()));
+				if (YFSUtil.getDebug()) {
+					System.out.println ("Output from getCommonCodeList() API:");
+					System.out.println (docOut.getString());
+				}
+				eleCommonCodes = docOut.getDocumentElement ();
+			} catch (Exception e) {
+				throw (new YFSUserExitException (e.getMessage()));
+			}
+			Iterator<YFCElement>	iCommonCodes = eleCommonCodes.getChildren();
+			// add any carrier services that are configured for this customer in common code table to the table
+			while (iCommonCodes.hasNext())
+			{
+				eleCommonCode = iCommonCodes.next();
+				String	sCodeValue = eleCommonCode.getAttribute("CodeValue");
+				if (sCodeValue.startsWith(sBillToID))
+					htCustomerCarriersAndServices.put(eleCommonCode.getAttribute("CodeShortDescription"), sCodeValue);				
+			}			
+		}
+		
 		iOrderLines = eleOrderLines.getChildren();
 		while (iOrderLines.hasNext ())
         {
@@ -116,21 +155,33 @@ public class SEGetCarrierServiceOptionsForOrderingUEImpl implements OMPGetCarrie
         	{
         		YFCElement eleCarrierServiceElement = (YFCElement)iCarrierServiceList.next();
         		String carrierServiceCode = eleCarrierServiceElement.getAttribute("CarrierServiceCode");
-        		eleCarrierServiceElement.setAttribute("Price", "0.00");
-        		// if we can't deliver to the customer same day (Configured for 50 Miles Max for Same Day)
+        		// if we can't deliver to the customer same day (Configured Miles Max for Same Day in carrier service setup)
         		// remove that option
         		if (carrierServiceCode.contains("SAMEDAY"))
         		{
         			YFCDate	dtToday = new YFCDate (System.currentTimeMillis());
         			YFCDate dtDeliveryEnd   = eleCarrierServiceElement.getDateAttribute("DeliveryEndDate");
+            		// if we can't deliver to the customer same day (Configured for 50 Miles Max for Same Day)
+            		// remove that option
         			if (dtDeliveryEnd.after(dtToday))
         			{
         				eleCarrierServiceList.removeChild(eleCarrierServiceElement);
         				iCarrierServiceList = eleCarrierServiceList.getChildren();
         			}            				
         		}
+        		// if carrier services for this customer are configured in the common code table
+        		if (!htCustomerCarriersAndServices.isEmpty())
+        		{
+            		/* remove any carrier services not configured for this customer	*/
+        			if (htCustomerCarriersAndServices.get(carrierServiceCode) == null)
+        			{
+        				eleCarrierServiceList.removeChild(eleCarrierServiceElement);
+            			iCarrierServiceList = eleCarrierServiceList.getChildren();
+        			}
+        		}
         	}
-        	
+        	/*
+        	 * FED EX DEMO CODE
             String sItemID = eleOrderLine.getChildElement("Item").getAttribute("ItemID");
             if (sItemID.startsWith("FX_SHIP"))
             {	
@@ -140,8 +191,6 @@ public class SEGetCarrierServiceOptionsForOrderingUEImpl implements OMPGetCarrie
             		YFCElement eleCarrierServiceElement = (YFCElement)iCarrierServiceList.next();
             		String carrierServiceCode = eleCarrierServiceElement.getAttribute("CarrierServiceCode");
             		eleCarrierServiceElement.setAttribute("Price", "0.00");
-            		// if we can't deliver to the customer same day (Configured for 50 Miles Max for Same Day)
-            		// remove that option
             		if ("FX_SHIP_GROUND".equals(sItemID))
             		{
             			if (carrierServiceCode.contains("STANDARD"))
@@ -173,7 +222,9 @@ public class SEGetCarrierServiceOptionsForOrderingUEImpl implements OMPGetCarrie
             				eleCarrierServiceElement.setAttribute("CarrierServiceDesc", "FedEx Overnight");
             		}
             	}
+        	 
             }
+            */
         }
 		if (YFSUtil.getDebug())
 		{
@@ -181,6 +232,32 @@ public class SEGetCarrierServiceOptionsForOrderingUEImpl implements OMPGetCarrie
 			System.out.println (doc.getString());
 		}
         return doc.getDocument();
+    }
+    
+    private String	getBillToID (YFSEnvironment env, YFCElement eleOrder) throws YFSUserExitException
+    {
+    	YFCDocument	docOrderDetailsTemplate = YFCDocument.getDocumentFor ("<Order OrderHeaderKey=\"\" BillToID=\"\" DocumentType=\"\" />");
+    	YFCDocument	docOrderDetailsInput = YFCDocument.getDocumentFor("<Order OrderHeaderKey=\"" + eleOrder.getAttribute ("OrderHeaderKey")+"\" />");
+    	String		sBillToID = null;
+    	try {
+    		YIFApi	api = YIFClientFactory.getInstance().getLocalApi();
+    		if (YFSUtil.getDebug()) {
+    			System.out.println ("Input to getOrderDetails() API:");
+    			System.out.println (docOrderDetailsInput.getString());
+    		}
+    		env.setApiTemplate("getOrderDetails", docOrderDetailsTemplate.getDocument());
+    		YFCDocument docOrderDetailsOutput = YFCDocument.getDocumentFor (api.getOrderDetails (env, docOrderDetailsInput.getDocument()));
+    		if (YFSUtil.getDebug()) {
+    			System.out.println ("Output from getOrderDetails() API:");
+    			System.out.println (docOrderDetailsOutput.getString());
+    		}
+    		sBillToID = docOrderDetailsOutput.getDocumentElement().getAttribute("BillToID");
+    	} catch (Exception e) {
+			throw (new YFSUserExitException (e.getMessage()));    		
+    	} finally {
+    		env.clearApiTemplate("getOrderDetails");
+    	}
+    	return sBillToID;
     }
 }
 
