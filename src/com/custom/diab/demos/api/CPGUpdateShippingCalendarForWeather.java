@@ -26,7 +26,7 @@ public class CPGUpdateShippingCalendarForWeather implements YIFCustomApi {
 		
 		YFCDocument	docWeather = YFCDocument.getDocumentFor(docIn);
 		YFCElement	eleWeather = docWeather.getDocumentElement();
-		YFCElement	ele3DayForecast = eleWeather.getChildElement("ThreeDayForecast");
+		YFCElement	ele5DayForecast = eleWeather.getChildElement("FiveDayForecast");
 		int			iHighTemp = eleWeather.getIntAttribute ("HighTempShutOff");
 		
 		YFCDocument	docChangeCalendar = YFCDocument.createDocument("Calendar");
@@ -37,11 +37,11 @@ public class CPGUpdateShippingCalendarForWeather implements YIFCustomApi {
 		eleChangeCalendar.setAttribute("OrganizationCode", eleWeather.getAttribute("OrganizationCode"));
 		eleChangeCalendar.setAttribute("CalendarId", eleWeather.getAttribute("CalendarId"));
 		
-		Iterator<YFCElement>	i3DayForecast = ele3DayForecast.getChildren();
+		Iterator<YFCElement>	i5DayForecast = ele5DayForecast.getChildren();
 		YFCDate					dtNow = new YFCDate (System.currentTimeMillis());
-		while (i3DayForecast.hasNext())
+		while (i5DayForecast.hasNext())
 		{
-			YFCElement	eleForecast = i3DayForecast.next();
+			YFCElement	eleForecast = i5DayForecast.next();
 			int	iForecastHighTemp = eleForecast.getIntAttribute("HighTemp");
 			YFCElement	eleCalendarDayException = eleCalendarDayExceptions.createChild("CalendarDayException");
 			eleCalendarDayException.setDateAttribute("Date", dtNow);
