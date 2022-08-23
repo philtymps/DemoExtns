@@ -64,25 +64,26 @@ public class SEBeforeCreateOrderUE implements YFSBeforeCreateOrderUE {
 			
 			/* WINE SHIPPING Customization */
 			String	sOrderType = eleOrder.getAttribute("OrderType");
-			if (sOrderType.equals("CONTAINERIZED"))
+			if (!YFCObject.isVoid(sOrderType) && sOrderType.equals("CONTAINERIZED"))
 			{
 				String	sCrateItem =  getCrateRequired(eleOrder);
 				System.out.println ("Crate Required=" + sCrateItem);
-
 				
 				if (!YFCObject.isNull(sCrateItem))
 				{
 					YFCElement	eleOrderLines;
 					YFCElement	eleOrderLine;
 					YFCElement	eleItem;
+					
 					eleOrderLines = eleOrder.getChildElement("OrderLines");
+					YFCElement	eleFirstOrderLine = eleOrderLines.getFirstChildElement();
 					eleOrderLine = eleOrderLines.createChild("OrderLine");
 					eleOrderLine.setAttribute("PrimeLineNo", "1");
 					eleOrderLine.setAttribute("SubLineNo", "2");
-					eleOrderLine.setAttribute("FulfillmenType", "D2C_PRODUCT_FULFILLMENT");
-					eleOrderLine.setAttribute("DeliveryMethod", "SHP");
-					eleOrderLine.setAttribute("SCAC", "Y_ANY");
-					eleOrderLine.setAttribute("CarrierServiceCode", "STANDARD_AURE");
+					eleOrderLine.setAttribute("FulfillmenType", eleFirstOrderLine.getAttribute("FulfillmentType"));
+					eleOrderLine.setAttribute("DeliveryMethod", eleFirstOrderLine.getAttribute("DeliveryMethod"));
+					eleOrderLine.setAttribute("SCAC", eleFirstOrderLine.getAttribute("SCAC"));
+					eleOrderLine.setAttribute("CarrierServiceCode", eleFirstOrderLine.getAttribute("CarrierServiceCode"));
 					eleItem = eleOrderLine.createChild("Item");
 					eleItem.setAttribute("ItemID", sCrateItem);
 					eleItem.setAttribute("UnitOfMeasure", "EACH");

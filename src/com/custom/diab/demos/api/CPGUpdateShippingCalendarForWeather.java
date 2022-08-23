@@ -43,12 +43,12 @@ public class CPGUpdateShippingCalendarForWeather implements YIFCustomApi {
 		{
 			YFCElement	eleForecast = i5DayForecast.next();
 			int	iForecastHighTemp = eleForecast.getIntAttribute("HighTemp");
-			YFCElement	eleCalendarDayException = eleCalendarDayExceptions.createChild("CalendarDayException");
-			eleCalendarDayException.setDateAttribute("Date", dtNow);
 			if (iForecastHighTemp >= iHighTemp)
-				eleCalendarDayException.setAttribute("ExceptionType", "0");
-			else
+			{
+				YFCElement	eleCalendarDayException = eleCalendarDayExceptions.createChild("CalendarDayException");
+				eleCalendarDayException.setDateAttribute("Date", dtNow);
 				eleCalendarDayException.setAttribute("ExceptionType", "1");
+			}
 			dtNow.changeDate(1);
 		}
 		try {
