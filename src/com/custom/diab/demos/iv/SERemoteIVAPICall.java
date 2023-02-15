@@ -3,6 +3,8 @@ package com.custom.diab.demos.iv;
 import com.custom.yantra.util.YFSUtil;
 import com.ibm.iv.adapter.RemoteIVAPICall;
 import org.w3c.dom.Document;
+
+import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.YFCDocument;
 import com.yantra.yfc.dom.YFCElement;
 import com.yantra.yfs.japi.YFSEnvironment;
@@ -21,6 +23,8 @@ public class SERemoteIVAPICall extends RemoteIVAPICall {
 		YFCElement	eleDocIn = docIn.getDocumentElement();
 		YFCElement  eleInput = eleDocIn.getChildElement("Input");
 		String	sInput = eleInput.getNodeValue();
+		if (YFCObject.isVoid(sInput))
+			return ;
 		
 		// fix issue with CARRY items on an order created in Store 
 		if (sInput.contains("\"deliveryMethod\":\"CARRY\""))
