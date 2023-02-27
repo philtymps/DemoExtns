@@ -30,13 +30,15 @@ public class SEBeforeCreateShipmentUEImpl implements YDMBeforeCreateShipment {
 					System.out.println (docShipment.getString());
 			}
 			String sDocType = eleShipment.getAttribute("DocumentType");
-
-			if("0006".contentEquals(eleShipment.getAttribute("DocumentType"))) {
+			String sDeliveryMethod = eleShipment.getAttribute("DeliveryMethod");
+			
+			if(!YFCObject.isVoid(sDocType) && sDocType.contentEquals("0006")) {
 				eleShipment.setAttribute("SCAC", "Y_ANY");
 				eleShipment.setAttribute("CarrierServiceCode", "EXPRESS_AURE");
 				eleShipment.setAttribute("ExpectedShipmentDate", YFCDateUtils.getCurrentDate(true).getString("yyyy-MM-dd"));
 			}
-			if("SHP".contentEquals(eleShipment.getAttribute("DeliveryMethod"))  && YFCCommon.isVoid(eleShipment.getAttribute("SCAC")))
+			
+			if(!YFCObject.isVoid(sDeliveryMethod) && (sDeliveryMethod.contentEquals("SHP")  && YFCCommon.isVoid(eleShipment.getAttribute("SCAC"))))
 			{
 				eleShipment.setAttribute("SCAC", "Y_ANY");
 				eleShipment.setAttribute("CarrierServiceCode", "STANDARD_AURE");
