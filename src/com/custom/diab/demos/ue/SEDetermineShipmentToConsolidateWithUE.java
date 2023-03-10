@@ -68,7 +68,7 @@ public class SEDetermineShipmentToConsolidateWithUE implements YDMDetermineShipm
 		// if system found no shipments to consolidate
 		if (!iShipments.hasNext() && (sDocumentType.equals("0001") || sDocumentType.equals("0005") || sDocumentType.equals("0006")))
 		{
-			try {
+		  try {
 			YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 			YFCDocument docShipmentList = YFCDocument.createDocument ("Shipment");
 			YFCElement  eleShipmentList = docShipmentList.getDocumentElement();
@@ -106,11 +106,11 @@ public class SEDetermineShipmentToConsolidateWithUE implements YDMDetermineShipm
 				System.out.println (docShipmentList.getString());
 			}
 
-			} catch (Exception e) {
+		  } catch (Exception e) {
 				throw new YFSUserExitException (e.getMessage());
-			} finally {
+		  } finally {
 				env.clearApiTemplate("getShipmentList");
-			}
+		  }
 		}
 		// search for eligible shipments we can consolidate with
 		while (iShipments.hasNext())
