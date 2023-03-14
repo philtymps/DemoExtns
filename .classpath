@@ -91,5 +91,6 @@
 	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/sivbe.jar"/>
 	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/javax.json-1.0.4.jar"/>
 	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/com.ibm.sterling.afc.jsonutil.jar"/>
+	<classpathentry kind="lib" path="D:/DIAB221/Runtime/jarall/oms-sfo.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
