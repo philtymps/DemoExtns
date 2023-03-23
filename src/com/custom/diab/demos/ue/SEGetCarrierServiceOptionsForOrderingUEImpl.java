@@ -128,18 +128,18 @@ public class SEGetCarrierServiceOptionsForOrderingUEImpl implements OMPGetCarrie
 					System.out.println (docOut.getString());
 				}
 				eleCommonCodes = docOut.getDocumentElement ();
-			} catch (Exception e) {
-				throw (new YFSUserExitException (e.getMessage()));
+				Iterator<YFCElement>	iCommonCodes = eleCommonCodes.getChildren();
+				// add any carrier services that are configured for this customer in common code table to the table
+				while (iCommonCodes.hasNext())
+				{
+					eleCommonCode = iCommonCodes.next();
+					String	sCodeValue = eleCommonCode.getAttribute("CodeValue");
+					if (sCodeValue.startsWith(sBillToID))
+						htCustomerCarriersAndServices.put(eleCommonCode.getAttribute("CodeShortDescription"), sCodeValue);				
+				}			
+			} catch (Exception ignore) {
+				ignore.printStackTrace();
 			}
-			Iterator<YFCElement>	iCommonCodes = eleCommonCodes.getChildren();
-			// add any carrier services that are configured for this customer in common code table to the table
-			while (iCommonCodes.hasNext())
-			{
-				eleCommonCode = iCommonCodes.next();
-				String	sCodeValue = eleCommonCode.getAttribute("CodeValue");
-				if (sCodeValue.startsWith(sBillToID))
-					htCustomerCarriersAndServices.put(eleCommonCode.getAttribute("CodeShortDescription"), sCodeValue);				
-			}			
 		}
 		
 		iOrderLines = eleOrderLines.getChildren();
