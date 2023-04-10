@@ -29,7 +29,11 @@ public class SESFOOptimizeOrderAPI extends SFOOptimizeOrderAPI implements OMPGet
         YFCElement elePromise = docPromise.getDocumentElement();
         YFCElement elePromiseLines = elePromise.getChildElement("PromiseLines");
         Iterator<YFCElement> iPromiseLines = elePromiseLines.getChildren();
+        
+        elePromise.setDateAttribute("OrderDate", new YFCDate());
+        
         if(YFSUtil.getDebug())
+        	
         {
             System.out.println("Input to before SEGetExternalCostForOptions UE:");
             System.out.println(elePromise.getString());
