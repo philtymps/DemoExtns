@@ -180,9 +180,8 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 		return htCarrierServiceCosts;
 	}
 
-	private boolean IsD2C (YFSEnvironment env, YFCElement eleOrder) throws Exception
+	private boolean IsD2C (YFSEnvironment env, YFCElement eleOrder) 
 	{
-		YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 		boolean	bRet = false;
 		
 		String	sEnterpriseCode = eleOrder.getAttribute ("EnterpriseCode");
@@ -201,23 +200,31 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 				System.out.println ("Input to getCustomerDetails:");
 				System.out.println (docCustomer.getString());
 			}
-			docCustomer = YFCDocument.getDocumentFor (api.getCustomerDetails (env, docCustomer.getDocument()));
-			env.clearApiTemplate ("getCustomerDetails");
-			eleCustomer = docCustomer.getDocumentElement();
-			if (YFSUtil.getDebug())
-			{
-				System.out.println ("Output from getCustomerDetails:");
-				System.out.println (docCustomer.getString());
-			}
+			try {
+				YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
+				
+				docCustomer = YFCDocument.getDocumentFor (api.getCustomerDetails (env, docCustomer.getDocument()));
+				env.clearApiTemplate ("getCustomerDetails");
+				eleCustomer = docCustomer.getDocumentElement();
+				if (YFSUtil.getDebug())
+				{
+					System.out.println ("Output from getCustomerDetails:");
+					System.out.println (docCustomer.getString());
+				}
 
-			// if CustomerType=02
-			if (!YFCObject.isVoid(eleCustomer.getAttribute("CustomerType")))
-			{
-				// get the values to test from Condition Args (OrderType, CustomerLevel)
-				String sTestCustomerType = (String) eleCustomer.getAttribute("CustomerType");
+				// if CustomerType=02
+				if (!YFCObject.isVoid(eleCustomer.getAttribute("CustomerType")))
+				{
+					// get the values to test from Condition Args (OrderType, CustomerLevel)
+					String sTestCustomerType = (String) eleCustomer.getAttribute("CustomerType");
 
-				if (sTestCustomerType.equals ("02"))				
-					bRet = true;
+					if (sTestCustomerType.equals ("02"))				
+						bRet = true;
+				}
+			} catch (Exception ignore) {
+
+			} finally {
+				env.clearApiTemplate("getCustomerDetails");
 			}
 		}
 		return bRet;
