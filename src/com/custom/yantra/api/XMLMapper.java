@@ -71,7 +71,6 @@ public class XMLMapper implements YIFCustomApi
 		return docIn;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Document WriteHTML (YFSEnvironment env, Document docIn) throws Exception
 	{
 		String sHtmlFileName = evaluateFileName (docIn);

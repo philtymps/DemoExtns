@@ -425,7 +425,7 @@ public class SEPrepareFairShareDemandAgentImpl extends YCPBaseAgent implements Y
 	{
 		List<String>	lstNodesAndQtys = getScheduledNodesAndQtys (eleOrderLine);
 		
-		int				iNode, iQty;
+		int				iNode;
 		StringBuilder	sNodesAndQuantities = new StringBuilder();
 		
 		for (iNode = 0; iNode < lstNodesAndQtys.size(); iNode++)

@@ -375,7 +375,7 @@ public class TmsInterfaceApiImplVer1 implements YIFCustomApi
 	{
 		YFCElement	eleLoads = eleOrder.getChildElement ("Loads");
 		Iterator<?>	iLoads = eleLoads.getChildren ();
-		String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
+		//String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
 		YIFApi		api = YIFClientFactory.getInstance().getLocalApi ();
 
 		while (iLoads.hasNext ())
@@ -463,7 +463,7 @@ public class TmsInterfaceApiImplVer1 implements YIFCustomApi
 	{
 		YFCElement	eleLanes = eleOrder.getChildElement ("Loads");
 		Iterator<?>	iLanes = eleLanes.getChildren ();
-		String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
+		//String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
 		YIFApi		api = YIFClientFactory.getInstance().getLocalApi ();
 
 		YFCDocument	docLoads = YFCDocument.createDocument ("Loads");
@@ -627,7 +627,7 @@ public class TmsInterfaceApiImplVer1 implements YIFCustomApi
 		YFCDocument	docOrderLineStatusList = YFCDocument.createDocument ("OrderLineStatus");
 		YFCElement	eleOrderLineStatusList = docOrderLineStatusList.getDocumentElement ();
 		eleOrderLineStatusList.setAttribute ("OrderLineKey", sOrderLineKey);
-		String	sOrderReleaseKey = "";
+		//String	sOrderReleaseKey = "";
 		YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 						
 		// get getOrderLineStatusList for the given order line	
@@ -785,7 +785,7 @@ public class TmsInterfaceApiImplVer1 implements YIFCustomApi
 		Hashtable<String, String>	htOrderLineReferences = getOrderLineReferences (eleOrderLineDetail);
 
 		String	sLineType = getExportField (eleOrderLineDetail.getAttribute ("LineType"), false);
-		String	sProductType = getExportField (htOrderLineReferences.get("PRODUCT_TYPE"), false);
+		//String	sProductType = getExportField (htOrderLineReferences.get("PRODUCT_TYPE"), false);
 		String 	sItemID = getExportField (eleItem.getAttribute ("ItemID"), false);
 		String	sQty = getExportField (eleOrderLineDetail.getAttribute ("OrderedQty"), false);
 		String	sPassengers = "0";

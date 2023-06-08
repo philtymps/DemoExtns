@@ -841,7 +841,6 @@ public class TmsInterfaceApiImplVer2 implements YIFCustomApi
 			eleOrder.setAttribute ("OrderDate", getServiceParameter ("OrderDate", docIn, new YFCDate (true).getString()));
 	}
 
-	@SuppressWarnings("deprecation")
 	protected void setOrderValues (YFSEnvironment env, YFCElement eleOrder, ResultSet rsDetail) throws Exception
 	{
 			// set common defaults for all order types
@@ -1165,7 +1164,7 @@ public class TmsInterfaceApiImplVer2 implements YIFCustomApi
 	{
 		YFCElement	eleLoads = eleOrder.getChildElement ("Loads");
 		Iterator<?>	iLoads = eleLoads.getChildren ();
-		String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
+		//String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
 		YIFApi		api = YIFClientFactory.getInstance().getLocalApi ();
 
 		while (iLoads.hasNext ())
@@ -1253,7 +1252,7 @@ public class TmsInterfaceApiImplVer2 implements YIFCustomApi
 	{
 		YFCElement	eleLanes = eleOrder.getChildElement ("Loads");
 		Iterator<?>	iLanes = eleLanes.getChildren ();
-		String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
+		//String		sOrderLineKey = eleOrder.getAttribute ("OrderKey");
 		YIFApi		api = YIFClientFactory.getInstance().getLocalApi ();
 
 		YFCDocument	docLoads = YFCDocument.createDocument ("Loads");
@@ -1435,7 +1434,7 @@ public class TmsInterfaceApiImplVer2 implements YIFCustomApi
 		YFCDocument	docOrderLineStatusList = YFCDocument.createDocument ("OrderLineStatus");
 		YFCElement	eleOrderLineStatusList = docOrderLineStatusList.getDocumentElement ();
 		eleOrderLineStatusList.setAttribute ("OrderLineKey", sOrderLineKey);
-		String	sOrderReleaseKey = "";
+		//String	sOrderReleaseKey = "";
 		YIFApi	api = YIFClientFactory.getInstance().getLocalApi ();
 						
 		// get getOrderLineStatusList for the given order line	

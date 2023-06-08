@@ -21,7 +21,7 @@ public class CPGUpdateShippingCalendarForWeather implements YIFCustomApi {
 		
 	}
 	
-	public Document	CPGUpdateShippingCalendarForWeather (YFSEnvironment env, Document docIn) throws YFSException
+	public Document	UpdateShippingCalendarForWeather (YFSEnvironment env, Document docIn) throws YFSException
 	{
 		
 		YFCDocument	docWeather = YFCDocument.getDocumentFor(docIn);
