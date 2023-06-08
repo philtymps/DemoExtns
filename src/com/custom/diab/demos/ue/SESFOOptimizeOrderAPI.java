@@ -5,6 +5,7 @@ import com.custom.yantra.util.YFSUtil;
 import com.ibm.sterling.sfo.api.optimizer.SFOOptimizeOrderAPI;
 import com.yantra.interop.japi.YIFApi;
 import com.yantra.interop.japi.YIFClientFactory;
+import com.yantra.interop.japi.YIFCustomApi;
 import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.*;
 import com.yantra.yfc.util.YFCDate;
@@ -12,15 +13,27 @@ import com.yantra.yfs.japi.YFSEnvironment;
 import com.yantra.yfs.japi.YFSUserExitException;
 import com.yantra.yfs.japi.ue.OMPGetExternalCostForOptionsUE;
 import java.util.Iterator;
+import java.util.Properties;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.w3c.dom.Document;
 
 
 @SuppressWarnings("deprecation")
-public class SESFOOptimizeOrderAPI extends SFOOptimizeOrderAPI implements OMPGetExternalCostForOptionsUE {
+public class SESFOOptimizeOrderAPI extends SFOOptimizeOrderAPI implements OMPGetExternalCostForOptionsUE, YIFCustomApi {
 
 	public SESFOOptimizeOrderAPI() {
 		// TODO Auto-generated constructor stub
 	}
+	
+	Properties	m_props;
+	
+	@Override
+	public void setProperties(Properties props) throws Exception {
+		// TODO Auto-generated method stub
+		m_props = props;
+	}
+	
 
 	@Override
 	public Document getExternalCostForOptions(YFSEnvironment env, Document docIn) throws YFSUserExitException
@@ -30,20 +43,32 @@ public class SESFOOptimizeOrderAPI extends SFOOptimizeOrderAPI implements OMPGet
         YFCElement elePromiseLines = elePromise.getChildElement("PromiseLines");
         Iterator<YFCElement> iPromiseLines = elePromiseLines.getChildren();
         
-        elePromise.setDateAttribute("OrderDate", new YFCDate());
+        elePromise.setAttribute("OrderDate", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date()));
         
         if(YFSUtil.getDebug())
         	
         {
-            System.out.println("Input to before SEGetExternalCostForOptions UE:");
+    		System.out.println("Input to before SEGetExternalCostForOptions UE:");
             System.out.println(elePromise.getString());
         }
         while(iPromiseLines.hasNext()) 
         {
-            YFCElement elePromiseLine = (YFCElement)iPromiseLines.next();
+            YFCElement	elePromiseLine = (YFCElement)iPromiseLines.next();
+            YFCElement	eleShipToAddress = elePromiseLine.getChildElement("ShipToAddress");
             YFCNodeList eleAssignments = elePromiseLine.getElementsByTagName("Assignment");
             Iterator iAssignments = eleAssignments.iterator();
             String sDeliveryDate = getOrderLineRDD(env, elePromiseLine.getAttribute("OrderLineReference"));
+            
+            // substitute OMS CarrierServiceCode with Optimizer SHIPPING Group based on API args passed
+            String sCarrierServiceCode = elePromiseLine.getAttribute("CarrierServiceCode");
+            if (!YFCObject.isVoid(m_props.getProperty(sCarrierServiceCode)))
+            	elePromiseLine.setAttribute("CarrierServiceCode", m_props.getProperty(sCarrierServiceCode));
+
+            // if no country default to US
+            if (!YFCObject.isNull(eleShipToAddress) && YFCObject.isVoid(eleShipToAddress.getAttribute("Country")))
+				eleShipToAddress.setAttribute("Country", "US");
+            
+            
             while(iAssignments.hasNext()) 
             {
                 YFCElement eleAssignment = (YFCElement)iAssignments.next();
@@ -59,6 +84,12 @@ public class SESFOOptimizeOrderAPI extends SFOOptimizeOrderAPI implements OMPGet
                     eleAssignment.setAttribute("DeliveryDate", sDeliveryDate);
                 }
             }
+        }
+        if(YFSUtil.getDebug())
+        	
+        {
+            System.out.println("Order No: " + elePromise.getAttribute("OrderNo") + " IS Eligible for Optimization");
+            System.out.println(elePromise.getString());
         }
         Document docOut = super.invoke(env, docPromise.getDocument());
         if(YFSUtil.getDebug())
