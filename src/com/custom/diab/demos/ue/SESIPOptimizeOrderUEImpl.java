@@ -9,7 +9,6 @@ import com.yantra.interop.japi.YIFClientFactory;
 import com.yantra.interop.japi.YIFCustomApi;
 import com.yantra.yfc.core.YFCObject;
 import com.yantra.yfc.dom.*;
-import com.yantra.yfc.util.YFCDate;
 import com.yantra.yfs.japi.YFSEnvironment;
 import com.yantra.yfs.japi.YFSUserExitException;
 import com.yantra.yfs.japi.ue.OMPGetExternalCostForOptionsUE;
@@ -41,16 +40,34 @@ public class SESIPOptimizeOrderUEImpl implements YIFCustomApi, OMPGetExternalCos
 	public Document getExternalCostForOptions(YFSEnvironment env, Document docIn) throws YFSUserExitException
     {
         YFCDocument docPromise = YFCDocument.getDocumentFor(docIn);
-        YFCElement elePromise = docPromise.getDocumentElement();
-
+        YFCElement	elePromise = docPromise.getDocumentElement();
         if(YFSUtil.getDebug())
         {
     		System.out.println("Input to before SEGetExternalCostForOptions UE:");
             System.out.println(elePromise.getString());
         }
-        String sOrderNo = elePromise.getAttribute("OrderNo");
-        elePromise.setAttribute("OrderDate", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date()));
 
+        boolean		bIsOrderEligibleForOptimizer = isOrderEligibleForOptimizer(env, docPromise); 
+        String		sOrderNo = elePromise.getAttribute("OrderNo");
+        
+    	if (bIsOrderEligibleForOptimizer)
+    	{
+            if(YFSUtil.getDebug())
+            	
+            {
+                System.out.println("Order No: " + sOrderNo + " IS Eligible for Optimization");
+            }
+    	}
+    	else
+    	{
+            if(YFSUtil.getDebug())
+            {
+                System.out.println("Order IS NOT Eligible for Optimization");
+            }
+            return docIn;
+    	}
+
+        
         YFCElement elePromiseLines = elePromise.getChildElement("PromiseLines");
         Iterator<YFCElement> iPromiseLines = elePromiseLines.getChildren();
         
@@ -100,31 +117,16 @@ public class SESIPOptimizeOrderUEImpl implements YIFCustomApi, OMPGetExternalCos
 
         String	sTenantId = getTenantProperty (env);
         try {
-        	YFCDocument docOut = null;
-        	if (isOrderEligibleForOptimizer(env, docPromise))
-        	{
-                if(YFSUtil.getDebug())
-                	
-                {
-                    System.out.println("Order No: " + sOrderNo + " IS Eligible for Optimization");
-                    System.out.println(elePromise.getString());
-                }
-
-        		docOut = YFCDocument.getDocumentFor(SIPWebClient.getInstance(sTenantId).invokeOptimizerApi(docPromise.getString(), MIME.APPLICATION_XML, "optimizer"));
-        	}
-        	else
-        	{
-                if(YFSUtil.getDebug())
-                	
-                {
-                    System.out.println("Order No: " + sOrderNo + " IS NOT Eligible for Optimization");
-                    System.out.println(elePromise.getString());
-                }
-        		docOut = docPromise;
-        	}
+            elePromise.setAttribute("OrderDate", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date()));
         	if(YFSUtil.getDebug())
         	{
-        		System.out.println("Output after SEGetExternalCostForOptions UE:");
+        		System.out.println("Input to SIP before Optimization:");
+        		System.out.println(docPromise.getString());
+        	}
+        	YFCDocument docOut = YFCDocument.getDocumentFor(SIPWebClient.getInstance(sTenantId).invokeOptimizerApi(docPromise.getString(), MIME.APPLICATION_XML, "optimizer"));
+        	if(YFSUtil.getDebug())
+        	{
+        		System.out.println("Output from SIP after Optimization");
         		System.out.println(docOut.getString());
         	}
         	return docOut.getDocument();
@@ -137,6 +139,9 @@ public class SESIPOptimizeOrderUEImpl implements YIFCustomApi, OMPGetExternalCos
 	{
 		boolean bRet = false;
 		String	sOrderHeaderKey = docPromise.getDocumentElement().getAttribute("OrderHeaderKey");
+		if (YFCObject.isVoid(sOrderHeaderKey))
+			return false;
+		
 		try
         {
             YIFApi api = YIFClientFactory.getInstance().getLocalApi();
