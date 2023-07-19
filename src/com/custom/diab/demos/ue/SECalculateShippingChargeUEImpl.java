@@ -78,9 +78,10 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 						continue;
 					// Note this UE gets passed services lines as order lines so we want to skip service lines.
 					// adding new UOM's for Services may require adding those new UOM's here.
-					if (eleOrderLine.getAttribute("UnitOfMeasure").equals("JOB") 
-					|| eleOrderLine.getAttribute("UnitOfMeasure").equals("UNIT") 
-					|| eleOrderLine.getAttribute("UnitOfMeasure").equals("HR"))
+					String sUOM = eleOrderLine.getAttribute("UnitOfMeasure");
+					
+					if (!YFCObject.isVoid(sUOM)
+					&& (sUOM.equals("JOB") || sUOM.equals("UNIT") || sUOM.equals("HR")))
 						continue;
 					
 					eleOrderLineDetailsInput.setAttribute("OrderLineKey", eleOrderLine.getAttribute ("LineID"));
