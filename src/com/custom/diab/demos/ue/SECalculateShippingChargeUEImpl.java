@@ -183,7 +183,7 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 
 	private boolean IsD2C (YFSEnvironment env, YFCElement eleOrder) 
 	{
-		boolean	bRet = false;
+		boolean	bRet = IsSFO (env, eleOrder);
 		
 		String	sEnterpriseCode = eleOrder.getAttribute ("EnterpriseCode");
 		String	sCustomerID = eleOrder.getAttribute("CustomerID");
@@ -230,5 +230,47 @@ public class SECalculateShippingChargeUEImpl implements YPMCalculateShippingChar
 		}
 		return bRet;
 	}
-
+	
+	private boolean IsSFO (YFSEnvironment env, YFCElement eleOrder)
+	{
+		boolean bRet = false;
+		String	sOrderHeaderKey = eleOrder.getAttribute("OrderReference");
+		if (YFCObject.isVoid(sOrderHeaderKey))
+			return false;
+		
+		try
+        {
+            YIFApi api = YIFClientFactory.getInstance().getLocalApi();
+            YFCDocument docOrderDetails = YFCDocument.getDocumentFor("<Order OrderHeaderKey=\"" + sOrderHeaderKey + "\"/>");
+            YFCDocument docOrderDetailsTemplate = YFCDocument.getDocumentFor("<Order OrderHeaderKey=\"\" OrderNo=\"\" DocumentType=\"\" ><Extn ExtnOptimizerFlag=\"\"/></Order>");
+            env.setApiTemplate("getOrderDetails", docOrderDetailsTemplate.getDocument());
+            if (YFSUtil.getDebug())
+            {
+            	System.out.println ("Input to getOrderDetails");
+            	System.out.println (docOrderDetails.getString());
+            }
+            docOrderDetails = YFCDocument.getDocumentFor(api.getOrderDetails(env, docOrderDetails.getDocument()));
+            if (YFSUtil.getDebug())
+            {
+            	System.out.println ("Output from getOrderDetails");
+            	System.out.println (docOrderDetails.getString());
+            }
+            YFCElement eleOrderDetails = docOrderDetails.getDocumentElement();
+    		YFCElement	eleExtn = eleOrderDetails.getChildElement("Extn");
+    		if (!YFCObject.isNull(eleExtn))
+    		{
+        		String		sExtnOptimizerFlag = eleExtn.getAttribute("ExtnOptimizerFlag"); 
+        		String		sDocumentType = eleOrderDetails.getAttribute("DocumentType");
+        		bRet = !YFCObject.isVoid(sExtnOptimizerFlag) && sExtnOptimizerFlag.equals("Y") && sDocumentType.equals("0001");
+    		}
+        }
+        catch(Exception e)
+        {
+        	env.clearApiTemplate("getOrderDetails");
+        } finally {
+        	env.clearApiTemplate("getOrderDetails");
+        }
+		
+		return bRet;
+	}
 }
